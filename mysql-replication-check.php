@@ -133,11 +133,16 @@ try {
 
     $check = 'X  ';
 
+    $totalLockTime = 0.0;
+    $startTime = microtime(true);
+
     foreach ($tables as $table) {
         echo str_pad($table, $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
 
         $master->query('LOCK TABLES ' . $table . ' READ');
         echo $check;
+
+        $lockStartTime = microtime(true);
 
         $statement = $master->query('SHOW MASTER STATUS');
         $status = $statement->fetch(PDO::FETCH_ASSOC);
@@ -161,6 +166,9 @@ try {
         $master->query('UNLOCK TABLES');
         echo $check;
 
+        $lockEndTime = microtime(true);
+        $totalLockTime += ($lockEndTime - $lockStartTime);
+
         $statement = $slave->query('CHECKSUM TABLE ' . $table);
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $slaveChecksum = $checksum['Checksum'];
@@ -173,7 +181,12 @@ try {
         echo PHP_EOL;
     }
 
-    echo 'Done.', PHP_EOL;
+    $endTime = microtime(true);
+    $totalTime = ($endTime - $startTime);
+
+    printf('Total time: %.0f seconds.' . PHP_EOL, $totalTime);
+    printf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalLockTime);
+
     exit(0);
 } catch (\PDOException $e) {
     echo 'PDO exception: ', $e->getMessage(), PHP_EOL;

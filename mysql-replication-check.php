@@ -119,73 +119,62 @@ try {
         }
     }
 
-    $errorTables = [];
+    $maxTableNameLength = 0;
 
     foreach ($tables as $table) {
-        echo 'Locking ', $table, ' on master', PHP_EOL;
-        $master->query('LOCK TABLES ' . $table . ' READ');
+        $length = strlen($table);
+        if ($length > $maxTableNameLength) {
+            $maxTableNameLength = $length;
+        }
+    }
 
-        echo 'Checking master binlog position', PHP_EOL;
+    echo str_repeat(' ', $maxTableNameLength + 1);
+    echo 'ML MB MC SW SL MU SC SU', PHP_EOL;
+
+    $check = 'X  ';
+
+    foreach ($tables as $table) {
+        echo str_pad($table, $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
+
+        $master->query('LOCK TABLES ' . $table . ' READ');
+        echo $check;
 
         $statement = $master->query('SHOW MASTER STATUS');
         $status = $statement->fetch(PDO::FETCH_ASSOC);
         $binlogFile = $status['File'];
         $binlogPosition = $status['Position'];
-
-        echo 'Checking ', $table, ' on master', PHP_EOL;
+        echo $check;
 
         $statement = $master->query('CHECKSUM TABLE ' . $table);
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $masterChecksum = $checksum['Checksum'];
-
-        echo 'Result: ', $masterChecksum, PHP_EOL;
-
-        echo 'Wait until slave keeps up with master', PHP_EOL;
+        echo $check;
 
         $statement = $slave->prepare('SELECT MASTER_POS_WAIT(?, ?)');
         $statement->execute([$binlogFile, $binlogPosition]);
         $statement->fetch();
+        echo $check;
 
-        echo 'Locking ', $table, ' on slave', PHP_EOL;
         $slave->query('LOCK TABLES ' . $table . ' READ');
-
-        echo 'Unlocking ', $table, ' on master', PHP_EOL;
+        echo $check;
 
         $master->query('UNLOCK TABLES');
-
-        echo 'Checking ', $table, ' on slave', PHP_EOL;
+        echo $check;
 
         $statement = $slave->query('CHECKSUM TABLE ' . $table);
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $slaveChecksum = $checksum['Checksum'];
-
-        echo 'Result: ', $slaveChecksum, PHP_EOL;
-
-        echo 'Unlocking ', $table, ' on slave', PHP_EOL;
+        echo $check;
 
         $slave->query('UNLOCK TABLES');
+        echo $check;
 
-        echo 'Result for ', $table, ': ';
-
-        if ($masterChecksum == $slaveChecksum) {
-            echo 'OK';
-        } else {
-            echo 'ERROR';
-            $errorTables[] = $table;
-        }
-
+        echo ($slaveChecksum === $masterChecksum) ? 'OK' : 'ERR';
         echo PHP_EOL;
     }
 
-    if ($errorTables) {
-        echo 'Done. Checked ', count($tables), ' tables, ', count($errorTables), ' errors:', PHP_EOL;
-
-        foreach ($errorTables as $table) {
-            echo $table, PHP_EOL;
-        }
-    } else {
-        echo 'Done. Checked ', count($tables), ' tables, no errors.', PHP_EOL;
-    }
+    echo 'Done.', PHP_EOL;
+    exit(0);
 } catch (\PDOException $e) {
     echo 'PDO exception: ', $e->getMessage(), PHP_EOL;
     exit(1);

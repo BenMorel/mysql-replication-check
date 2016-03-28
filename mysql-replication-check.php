@@ -102,10 +102,11 @@ try {
 
     if (isset($options['tables'])) {
         $filters = explode(',', $options['tables']);
-        foreach ($filters as & $filter) {
+        foreach ($filters as $key => $filter) {
             $filter = str_replace('.', '\.', $filter);
             $filter = str_replace('*', '.+', $filter);
             $filter = '/^' . $filter . '$/';
+            $filters[$key] = $filter;
         }
 
         foreach ($tables as $key => $table) {

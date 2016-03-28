@@ -190,6 +190,7 @@ try {
     $endTime = microtime(true);
     $totalTime = ($endTime - $startTime);
 
+    echo PHP_EOL;
     printf('Total time: %.0f seconds.' . PHP_EOL, $totalTime);
     printf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalLockTime);
 

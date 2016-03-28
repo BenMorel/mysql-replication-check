@@ -120,6 +120,11 @@ try {
         }
     }
 
+    if (! $tables) {
+        echo 'Nothing to do.', PHP_EOL;
+        exit(0);
+    }
+
     $maxTableNameLength = 0;
 
     foreach ($tables as $table) {

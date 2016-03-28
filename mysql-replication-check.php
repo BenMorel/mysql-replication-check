@@ -132,6 +132,14 @@ try {
         $binlogFile = $status['File'];
         $binlogPosition = $status['Position'];
 
+        echo 'Checking ', $table, ' on master', PHP_EOL;
+
+        $statement = $master->query('CHECKSUM TABLE ' . $table);
+        $checksum = $statement->fetch(PDO::FETCH_ASSOC);
+        $masterChecksum = $checksum['Checksum'];
+
+        echo 'Result: ', $masterChecksum, PHP_EOL;
+
         echo 'Wait until slave keeps up with master', PHP_EOL;
 
         $statement = $slave->prepare('SELECT MASTER_POS_WAIT(?, ?)');
@@ -140,14 +148,6 @@ try {
 
         echo 'Locking ', $table, ' on slave', PHP_EOL;
         $slave->query('LOCK TABLES ' . $table . ' READ');
-
-        echo 'Checking ', $table, ' on master', PHP_EOL;
-
-        $statement = $master->query('CHECKSUM TABLE ' . $table);
-        $checksum = $statement->fetch(PDO::FETCH_ASSOC);
-        $masterChecksum = $checksum['Checksum'];
-
-        echo 'Result: ', $masterChecksum, PHP_EOL;
 
         echo 'Unlocking ', $table, ' on master', PHP_EOL;
 

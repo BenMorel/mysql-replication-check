@@ -104,7 +104,7 @@ try {
         $filters = explode(',', $options['tables']);
         foreach ($filters as $key => $filter) {
             $filter = str_replace('.', '\.', $filter);
-            $filter = str_replace('*', '.+', $filter);
+            $filter = str_replace('*', '.*', $filter);
             $filter = '/^' . $filter . '$/';
             $filters[$key] = $filter;
         }

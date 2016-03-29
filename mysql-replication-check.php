@@ -137,7 +137,7 @@ try {
     echo str_repeat(' ', $maxTableNameLength + 1);
     echo 'ML MB MC SW SL MU SC SU', PHP_EOL;
 
-    $check = 'X  ';
+    $check = '.  ';
 
     $totalLockTime = 0.0;
     $startTime = microtime(true);

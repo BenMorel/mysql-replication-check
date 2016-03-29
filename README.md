@@ -58,9 +58,9 @@ Each checked table is output on a separate line, along with the current action b
 and finally the result of the sync check: `OK` or `ERR`.
 
              ML MB MC SW SL MU SC SU
-    foo.user X  X  X  X  X  X  X  X  OK
-    foo.post X  X  X  X  X  X  X  X  OK
-    foo.tag  X  X  X  X  X  X  X  X  OK
+    foo.user .  .  .  .  .  .  .  .  OK
+    foo.post .  .  .  .  .  .  .  .  OK
+    foo.tag  .  .  .  .  .  .  .  .  OK
     
     Total time: 5 seconds.
     Total master lock time: 2 seconds.

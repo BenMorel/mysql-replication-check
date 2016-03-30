@@ -12,7 +12,7 @@ This tool requires PHP >= 5.3 and the [PDO_MYSQL](http://php.net/manual/en/ref.p
 
 ## Compatibility
 
-This tool has been tested with MySQL 5.7, but should work equally well with any MYSQL 5 version. Please open an issue if you find out that it doesn't.
+This tool has been tested with MySQL 5.7, but should work equally well with any MySQL 5 version. Please open an issue if you find out that it doesn't.
 It works equally well with all types of replication: `STATEMENT`, `ROW` and `MIXED`, and all storage engines.
 
 ## Download

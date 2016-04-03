@@ -139,6 +139,7 @@ try {
 
     $check = '.  ';
 
+    $totalErrors = 0;
     $totalLockTime = 0.0;
     $startTime = microtime(true);
 
@@ -183,7 +184,13 @@ try {
         $slave->query('UNLOCK TABLES');
         echo $check;
 
-        echo ($slaveChecksum === $masterChecksum) ? 'OK' : 'ERR';
+        if ($slaveChecksum === $masterChecksum) {
+            echo 'OK';
+        } else {
+            echo 'ERR';
+            $totalErrors++;
+        }
+
         echo PHP_EOL;
     }
 
@@ -191,6 +198,7 @@ try {
     $totalTime = ($endTime - $startTime);
 
     echo PHP_EOL;
+    printf('Tables in error: %d.' . PHP_EOL, $totalErrors);
     printf('Total time: %.0f seconds.' . PHP_EOL, $totalTime);
     printf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalLockTime);
 

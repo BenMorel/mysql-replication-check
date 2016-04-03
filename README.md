@@ -62,6 +62,7 @@ and finally the result of the sync check: `OK` or `ERR`.
     foo.post .  .  .  .  .  .  .  .  OK
     foo.tag  .  .  .  .  .  .  .  .  OK
     
+    Tables in error: 0.
     Total time: 5 seconds.
     Total master lock time: 2 seconds.
 

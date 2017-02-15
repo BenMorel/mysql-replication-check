@@ -140,8 +140,13 @@ try {
     $check = '.  ';
 
     $totalErrors = 0;
+
     $totalMasterLockTime = 0.0;
-    $totalSlaveLockTime = 0.0;
+    $totalSlaveLockTime  = 0.0;
+
+    $longestMasterLockTime = 0.0;
+    $longestSlaveLockTime  = 0.0;
+
     $startTime = microtime(true);
 
     foreach ($tables as $table) {
@@ -177,7 +182,12 @@ try {
         echo $check;
 
         $masterLockEndTime = microtime(true);
-        $totalMasterLockTime += ($masterLockEndTime - $masterLockStartTime);
+        $masterLockTime = $masterLockEndTime - $masterLockStartTime;
+        $totalMasterLockTime += $masterLockTime;
+
+        if ($masterLockTime > $longestMasterLockTime) {
+            $longestMasterLockTime = $masterLockTime;
+        }
 
         $statement = $slave->query('CHECKSUM TABLE ' . $table);
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
@@ -188,7 +198,12 @@ try {
         echo $check;
 
         $slaveLockEndTime = microtime(true);
-        $totalSlaveLockTime += ($slaveLockEndTime - $slaveLockStartTime);
+        $slaveLockTime = $slaveLockEndTime - $slaveLockStartTime;
+        $totalSlaveLockTime += $slaveLockTime;
+
+        if ($slaveLockTime > $longestSlaveLockTime) {
+            $longestSlaveLockTime = $slaveLockTime;
+        }
 
         if ($slaveChecksum === $masterChecksum) {
             echo 'OK';
@@ -204,10 +219,18 @@ try {
     $totalTime = ($endTime - $startTime);
 
     echo PHP_EOL;
-    printf('Tables in error: %d.' . PHP_EOL, $totalErrors);
     printf('Total time: %.0f seconds.' . PHP_EOL, $totalTime);
+
+    echo PHP_EOL;
     printf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalMasterLockTime);
+    printf('Longest master lock time: %.1f seconds.' . PHP_EOL, $longestMasterLockTime);
+
+    echo PHP_EOL;
     printf('Total slave lock time: %.0f seconds.' . PHP_EOL, $totalSlaveLockTime);
+    printf('Longest slave lock time: %.1f seconds.' . PHP_EOL, $longestSlaveLockTime);
+
+    echo PHP_EOL;
+    printf('Tables in error: %d.' . PHP_EOL, $totalErrors);
 
     exit(0);
 } catch (\PDOException $e) {

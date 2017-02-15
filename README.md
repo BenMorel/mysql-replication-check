@@ -62,10 +62,15 @@ and finally the result of the sync check: `OK` or `ERR`.
     foo.post .  .  .  .  .  .  .  .  OK
     foo.tag  .  .  .  .  .  .  .  .  OK
     
-    Tables in error: 0.
     Total time: 5 seconds.
+    
     Total master lock time: 2 seconds.
+    Longest master lock time: 0.9 seconds.
+    
     Total slave lock time: 3 seconds.
+    Longest slave lock time: 1.5 seconds.
+    
+    Tables in error: 0.
 
 Each column represents the current action being undertaken:
 
@@ -78,7 +83,7 @@ Each column represents the current action being undertaken:
 - `SC` = Slave Checksum table
 - `SU` = Slave Unlock table
 
-The total lock time gives you an idea of the impact the run of the tool has had on the availability of the database.
+The lock times give you an idea of the impact the tool had on the availability of the database.
 
 ## Cancelling the check
 

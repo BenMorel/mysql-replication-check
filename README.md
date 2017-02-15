@@ -65,6 +65,7 @@ and finally the result of the sync check: `OK` or `ERR`.
     Tables in error: 0.
     Total time: 5 seconds.
     Total master lock time: 2 seconds.
+    Total slave lock time: 3 seconds.
 
 Each column represents the current action being undertaken:
 
@@ -77,7 +78,7 @@ Each column represents the current action being undertaken:
 - `SC` = Slave Checksum table
 - `SU` = Slave Unlock table
 
-The total master lock time gives you an idea of the impact the run of the tool has had on the availability of the database.
+The total lock time gives you an idea of the impact the run of the tool has had on the availability of the database.
 
 ## Cancelling the check
 

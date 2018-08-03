@@ -74,14 +74,16 @@ and finally the result of the sync check: `OK` or `ERR`.
 
 Each column represents the current action being undertaken:
 
-- `ML` = Master Lock table
-- `MB` = Master Binlog position read
-- `MC` = Master Checksum table
-- `SW` = Slave Wait for sync with master
-- `SL` = Slave Lock table
-- `MU` = Master Unlock table
-- `SC` = Slave Checksum table
-- `SU` = Slave Unlock table
+| Column | Target | Action                    |
+| ----   | ------ | ------------------------- |
+| `ML`   | Master | Lock table                |
+| `MB`   | Master | Binlog position read      |
+| `MC`   | Master | Checksum table            |
+| `SW`   | Slave  | Wait for sync with master |
+| `SL`   | Slave  | Lock table                |
+| `MU`   | Master | Unlock table              |
+| `SC`   | Slave  | Checksum table            |
+| `SU`   | Slave  | Unlock table              |
 
 The lock times give you an idea of the impact the tool had on the availability of the database.
 

@@ -17,7 +17,9 @@ function usage()  {
     printf('    --slave-user         Optional    The slave server username' . PHP_EOL);
     printf('    --slave-password     Optional    The slave server password' . PHP_EOL);
     printf('    --slave-ssl-ca       Optional    The path to an SSL CA file for the slave' . PHP_EOL);
+
     printf('    --tables             Optional    A comma-separated list of tables to check' . PHP_EOL);
+    printf('    --ignore-tables      Optional    A comma-separated list of tables to ignore' . PHP_EOL);
 
     printf(PHP_EOL);
     printf('Example: ' . PHP_EOL);
@@ -25,6 +27,7 @@ function usage()  {
     printf('        --master-host=localhost \\' . PHP_EOL);
     printf('        --slave-host=replica.example.com \\' . PHP_EOL);
     printf('        --tables="foo.*,bar.*"' . PHP_EOL);
+    printf('        --ignore-tables="foo.bar,foo.baz"' . PHP_EOL);
 
     exit(1);
 }
@@ -40,7 +43,8 @@ $options = getopt('', [
     'slave-user:',
     'slave-password:',
     'slave-ssl-ca:',
-    'tables:'
+    'tables:',
+    'ignore-tables:'
 ]);
 
 foreach ($options as $key => $value) {
@@ -80,6 +84,30 @@ function createPDO(array $values) {
     return new PDO($dsn, $user, $password, $options);
 }
 
+function filterTables(array $tables, $pattern, $inverse) {
+    $filters = explode(',', $pattern);
+    foreach ($filters as $key => $filter) {
+        $filter = str_replace('.', '\.', $filter);
+        $filter = str_replace('*', '.*', $filter);
+        $filter = '/^' . $filter . '$/';
+        $filters[$key] = $filter;
+    }
+
+    $result = [];
+
+    foreach ($tables as $table) {
+        foreach ($filters as $filter) {
+            $match = (preg_match($filter, $table) === 1);
+
+            if ($match !== $inverse) {
+                $result[] = $table;
+            }
+        }
+    }
+
+    return $result;
+}
+
 try {
     $master = createPDO($options['master']);
     $slave  = createPDO($options['slave']);
@@ -101,23 +129,10 @@ try {
     }
 
     if (isset($options['tables'])) {
-        $filters = explode(',', $options['tables']);
-        foreach ($filters as $key => $filter) {
-            $filter = str_replace('.', '\.', $filter);
-            $filter = str_replace('*', '.*', $filter);
-            $filter = '/^' . $filter . '$/';
-            $filters[$key] = $filter;
-        }
-
-        foreach ($tables as $key => $table) {
-            foreach ($filters as $filter) {
-                if (preg_match($filter, $table)) {
-                    continue 2;
-                }
-            }
-
-            unset($tables[$key]);
-        }
+        $tables = filterTables($tables, $options['tables'], false);
+    }
+    if (isset($options['ignore']['tables'])) {
+        $tables = filterTables($tables, $options['ignore']['tables'], true);
     }
 
     if (! $tables) {

@@ -84,6 +84,26 @@ function createPDO(array $values) {
     return new PDO($dsn, $user, $password, $options);
 }
 
+function loadTables(PDO $master) {
+    $databases = [];
+
+    $statement = $master->query('SHOW DATABASES');
+    while (false !== $database = $statement->fetchColumn()) {
+        $databases[] = $database;
+    }
+
+    $tables = [];
+
+    foreach ($databases as $database) {
+        $statement = $master->query('SHOW TABLES FROM ' . $database);
+        while (false !== $table = $statement->fetchColumn()) {
+            $tables[] = $database . '.' . $table;
+        }
+    }
+
+    return $tables;
+}
+
 function filterTables(array $tables, $pattern, $inverse) {
     $filters = explode(',', $pattern);
     foreach ($filters as $key => $filter) {
@@ -112,21 +132,7 @@ try {
     $master = createPDO($options['master']);
     $slave  = createPDO($options['slave']);
 
-    $databases = [];
-
-    $statement = $master->query('SHOW DATABASES');
-    while (false !== $database = $statement->fetchColumn()) {
-        $databases[] = $database;
-    }
-
-    $tables = [];
-
-    foreach ($databases as $database) {
-        $statement = $master->query('SHOW TABLES FROM ' . $database);
-        while (false !== $table = $statement->fetchColumn()) {
-            $tables[] = $database . '.' . $table;
-        }
-    }
+    $tables = loadTables($master);
 
     if (isset($options['tables'])) {
         $tables = filterTables($tables, $options['tables'], false);

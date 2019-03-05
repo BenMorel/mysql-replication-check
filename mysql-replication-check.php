@@ -121,6 +121,7 @@ function filterTables(array $tables, $pattern, $inverse) {
 
             if ($match !== $inverse) {
                 $result[] = $table;
+                break;
             }
         }
     }

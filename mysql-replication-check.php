@@ -116,13 +116,16 @@ function filterTables(array $tables, $pattern, $inverse) {
     $result = [];
 
     foreach ($tables as $table) {
+        $match = false;
         foreach ($filters as $filter) {
-            $match = (preg_match($filter, $table) === 1);
-
-            if ($match !== $inverse) {
-                $result[] = $table;
+            if (preg_match($filter, $table) === 1) {
+                $match = true;
                 break;
             }
+        }
+
+        if ($match !== $inverse) {
+            $result[] = $table;
         }
     }
 

@@ -95,7 +95,7 @@ function loadTables(PDO $master) {
     $tables = [];
 
     foreach ($databases as $database) {
-        $statement = $master->query('SHOW TABLES FROM ' . $database);
+        $statement = $master->query("SHOW FULL TABLES FROM $database WHERE Table_Type != 'VIEW'");
         while (false !== $table = $statement->fetchColumn()) {
             $tables[] = $database . '.' . $table;
         }

@@ -4,7 +4,7 @@ This tool uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table.html)
 As opposed to several checksum tools, it is totally read-only: it does not write anything to the database, making it very safe.
 
 This tool uses table locks. Depending on the size of your tables, the speed of your server, and/or the availability of a maintenance window during which these locks are acceptable, this can be a problem or not.
-Locks are hold for as little time as possible, and always one table at a time.
+Locks are held for as little time as possible, and always one table at a time.
 
 ## Requirements
 

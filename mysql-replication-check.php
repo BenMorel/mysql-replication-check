@@ -104,6 +104,13 @@ function loadTables(PDO $master) {
     return $tables;
 }
 
+/**
+ * @param string[] $tables
+ * @param string $pattern
+ * @param bool $inverse
+ *
+ * @return string[]
+ */
 function filterTables(array $tables, $pattern, $inverse) {
     $filters = explode(',', $pattern);
     foreach ($filters as $key => $filter) {
@@ -130,6 +137,15 @@ function filterTables(array $tables, $pattern, $inverse) {
     }
 
     return $result;
+}
+
+/**
+ * @param string $name
+ *
+ * @return string
+ */
+function quoteIdentifier($name) {
+    return '`' . str_replace('`', '``', $name) . '`';
 }
 
 try {
@@ -177,7 +193,7 @@ try {
     foreach ($tables as $table) {
         echo str_pad($table, $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
 
-        $master->query('LOCK TABLES ' . $table . ' READ');
+        $master->query('LOCK TABLES ' . quoteIdentifier($table) . ' READ');
         echo $check;
 
         $masterLockStartTime = microtime(true);
@@ -188,7 +204,7 @@ try {
         $binlogPosition = $status['Position'];
         echo $check;
 
-        $statement = $master->query('CHECKSUM TABLE ' . $table);
+        $statement = $master->query('CHECKSUM TABLE ' . quoteIdentifier($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $masterChecksum = $checksum['Checksum'];
         echo $check;
@@ -198,7 +214,7 @@ try {
         $statement->fetch();
         echo $check;
 
-        $slave->query('LOCK TABLES ' . $table . ' READ');
+        $slave->query('LOCK TABLES ' . quoteIdentifier($table) . ' READ');
         echo $check;
 
         $slaveLockStartTime = microtime(true);
@@ -214,7 +230,7 @@ try {
             $longestMasterLockTime = $masterLockTime;
         }
 
-        $statement = $slave->query('CHECKSUM TABLE ' . $table);
+        $statement = $slave->query('CHECKSUM TABLE ' . quoteIdentifier($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $slaveChecksum = $checksum['Checksum'];
         echo $check;

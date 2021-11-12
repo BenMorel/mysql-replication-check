@@ -8,7 +8,7 @@ Locks are held for as little time as possible, and always one table at a time.
 
 ## Requirements
 
-This tool requires PHP >= 5.3 and the [PDO_MYSQL](http://php.net/manual/en/ref.pdo-mysql.php) driver.
+This tool requires PHP >= 5.4 and the [PDO_MYSQL](http://php.net/manual/en/ref.pdo-mysql.php) driver.
 
 ## Compatibility
 

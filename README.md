@@ -42,7 +42,7 @@ Download here: [mysql-replication-check.php](https://raw.githubusercontent.com/B
 
 ### Filtering
 
-By default, all tables are checked, including the system tables. This is probably not what you want.
+By default, all tables from all non-system databases are checked.
 Use the `--tables` to filter the tables to check. This parameter accepts a comma-separated list of tables,
 optionally using the `*` placeholder. Each table is referenced with its database, in the `database.table` format.
 

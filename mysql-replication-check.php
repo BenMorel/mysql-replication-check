@@ -95,6 +95,10 @@ function loadTables(PDO $master) {
 
     $statement = $master->query('SHOW DATABASES');
     while (false !== $database = $statement->fetchColumn()) {
+        if (isInternalDatabase($database)) {
+            continue;
+        }
+
         $databases[] = $database;
     }
 
@@ -183,6 +187,19 @@ function quoteTableName(array $table) {
  */
 function quoteIdentifier($name) {
     return '`' . str_replace('`', '``', $name) . '`';
+}
+
+/**
+ * @param string $name
+ *
+ * @return bool
+ */
+function isInternalDatabase($name) {
+    return in_array($name, [
+        'mysql',
+        'information_schema',
+        'performance_schema',
+    ], true);
 }
 
 try {

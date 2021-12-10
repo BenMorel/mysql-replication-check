@@ -63,6 +63,9 @@ if (! isset($options['slave']['host'])) {
     usage();
 }
 
+/**
+ * @return PDO
+ */
 function createPDO(array $values) {
     $dsn = 'mysql:host=' . $values['host'];
 
@@ -84,6 +87,9 @@ function createPDO(array $values) {
     return new PDO($dsn, $user, $password, $options);
 }
 
+/**
+ * @return array<array{string, string}>
+ */
 function loadTables(PDO $master) {
     $databases = [];
 
@@ -97,7 +103,7 @@ function loadTables(PDO $master) {
     foreach ($databases as $database) {
         $statement = $master->query('SHOW FULL TABLES FROM ' . quoteIdentifier($database) . " WHERE Table_Type != 'VIEW'");
         while (false !== $table = $statement->fetchColumn()) {
-            $tables[] = $database . '.' . $table;
+            $tables[] = [$database, $table];
         }
     }
 
@@ -105,27 +111,21 @@ function loadTables(PDO $master) {
 }
 
 /**
- * @param string[] $tables
+ * @param array<array{string, string}> $tables
  * @param string $pattern
  * @param bool $inverse
  *
- * @return string[]
+ * @return array<array{string, string}>
  */
 function filterTables(array $tables, $pattern, $inverse) {
     $filters = explode(',', $pattern);
-    foreach ($filters as $key => $filter) {
-        $filter = str_replace('.', '\.', $filter);
-        $filter = str_replace('*', '.*', $filter);
-        $filter = '/^' . $filter . '$/';
-        $filters[$key] = $filter;
-    }
 
     $result = [];
 
     foreach ($tables as $table) {
         $match = false;
         foreach ($filters as $filter) {
-            if (preg_match($filter, $table) === 1) {
+            if (tableMatchesFilter($table, $filter)) {
                 $match = true;
                 break;
             }
@@ -137,6 +137,43 @@ function filterTables(array $tables, $pattern, $inverse) {
     }
 
     return $result;
+}
+
+/**
+ * @param array{string, string} $table
+ * @param string $filter
+ *
+ * @return bool
+ */
+function tableMatchesFilter(array $table, $filter)
+{
+    $databaseAndTablePatterns = explode('.', $filter);
+
+    if (count($databaseAndTablePatterns) !== 2) {
+        echo "Invalid filter: $filter\n";
+        echo "Please use this format: database.table\n";
+        echo "You can use a wildcard * at any position.\n";
+        exit(1);
+    }
+
+    $databaseAndTablePatterns = array_map(function($pattern) {
+        return '/^' . str_replace('\\*', '.*', preg_quote($pattern, '/')) . '$/';
+    }, $databaseAndTablePatterns);
+
+    list ($database, $table) = $table;
+    list ($databasePattern, $tablePattern) = $databaseAndTablePatterns;
+
+    return preg_match($databasePattern, $database) === 1
+        && preg_match($tablePattern, $table) === 1;
+}
+
+/**
+ * @param array{string, string} $table
+ *
+ * @return string
+ */
+function quoteTableName(array $table) {
+    return quoteIdentifier($table[0]) . '.' . quoteIdentifier($table[1]);
 }
 
 /**
@@ -169,7 +206,7 @@ try {
     $maxTableNameLength = 0;
 
     foreach ($tables as $table) {
-        $length = strlen($table);
+        $length = strlen($table[0]) + strlen($table[1]) + 1;
         if ($length > $maxTableNameLength) {
             $maxTableNameLength = $length;
         }
@@ -191,9 +228,9 @@ try {
     $startTime = microtime(true);
 
     foreach ($tables as $table) {
-        echo str_pad($table, $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
+        echo str_pad($table[0] . '.' . $table[1], $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
 
-        $master->query('LOCK TABLES ' . quoteIdentifier($table) . ' READ');
+        $master->query('LOCK TABLES ' . quoteTableName($table) . ' READ');
         echo $check;
 
         $masterLockStartTime = microtime(true);
@@ -204,7 +241,7 @@ try {
         $binlogPosition = $status['Position'];
         echo $check;
 
-        $statement = $master->query('CHECKSUM TABLE ' . quoteIdentifier($table));
+        $statement = $master->query('CHECKSUM TABLE ' . quoteTableName($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $masterChecksum = $checksum['Checksum'];
         echo $check;
@@ -214,7 +251,7 @@ try {
         $statement->fetch();
         echo $check;
 
-        $slave->query('LOCK TABLES ' . quoteIdentifier($table) . ' READ');
+        $slave->query('LOCK TABLES ' . quoteTableName($table) . ' READ');
         echo $check;
 
         $slaveLockStartTime = microtime(true);
@@ -230,7 +267,7 @@ try {
             $longestMasterLockTime = $masterLockTime;
         }
 
-        $statement = $slave->query('CHECKSUM TABLE ' . quoteIdentifier($table));
+        $statement = $slave->query('CHECKSUM TABLE ' . quoteTableName($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $slaveChecksum = $checksum['Checksum'];
         echo $check;

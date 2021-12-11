@@ -217,7 +217,7 @@ try {
 
     if (! $tables) {
         echo 'Nothing to do.', PHP_EOL;
-        exit(0);
+        exit(1);
     }
 
     $maxTableNameLength = 0;
@@ -331,7 +331,7 @@ try {
         echo ' - ', $table[0], '.', $table[1], "\n";
     }
 
-    exit(0);
+    exit($tablesInError ? 1 : 0);
 } catch (\PDOException $e) {
     echo 'PDO exception: ', $e->getMessage(), PHP_EOL;
     exit(1);

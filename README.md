@@ -25,20 +25,21 @@ Download here: [mysql-replication-check.php](https://raw.githubusercontent.com/B
 
 ### Available options
 
-| Option name         | Presence     | Description                                |
-| ------------------- | ------------ | ------------------------------------------ |
-| `--master-host`     | **Required** | The master server hostname                 |
-| `--master-port`     | Optional     | The master server port                     |
-| `--master-user`     | Optional     | The master server username                 |
-| `--master-password` | Optional     | The master server password                 |
-| `--master-ssl-ca`   | Optional     | The path to an SSL CA file for the master  |
-| `--slave-host`      | **Required** | The slave server hostname                  |
-| `--slave-port`      | Optional     | The slave server port                      |
-| `--slave-user`      | Optional     | The slave server username                  |
-| `--slave-password`  | Optional     | The slave server password                  |
-| `--slave-ssl-ca`    | Optional     | The path to an SSL CA file for the slave   |
-| `--tables`          | Optional     | A comma-separated list of tables to check  |
-| `--ignore-tables`   | Optional     | A comma-separated list of tables to ignore |
+| Option name         | Presence     | Description                                               |
+| ------------------- | ------------ |-----------------------------------------------------------|
+| `--master-host`     | **Required** | The master server hostname                                |
+| `--master-port`     | Optional     | The master server port                                    |
+| `--master-user`     | Optional     | The master server username                                |
+| `--master-password` | Optional     | The master server password                                |
+| `--master-ssl-ca`   | Optional     | The path to an SSL CA file for the master                 |
+| `--slave-host`      | **Required** | The slave server hostname                                 |
+| `--slave-port`      | Optional     | The slave server port                                     |
+| `--slave-user`      | Optional     | The slave server username                                 |
+| `--slave-password`  | Optional     | The slave server password                                 |
+| `--slave-ssl-ca`    | Optional     | The path to an SSL CA file for the slave                  |
+| `--tables`          | Optional     | A comma-separated list of tables to check                 |
+| `--ignore-tables`   | Optional     | A comma-separated list of tables to ignore                |
+| `--quiet`           | Optional     | Set this flag to only output something if the check fails |
 
 ### Filtering
 

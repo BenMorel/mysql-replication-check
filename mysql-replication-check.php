@@ -20,6 +20,7 @@ function usage()  {
 
     printf('    --tables             Optional    A comma-separated list of tables to check' . PHP_EOL);
     printf('    --ignore-tables      Optional    A comma-separated list of tables to ignore' . PHP_EOL);
+    printf('    --quiet              Optional    Set this flag to only output something if the check fails' . PHP_EOL);
 
     printf(PHP_EOL);
     printf('Example: ' . PHP_EOL);
@@ -44,7 +45,8 @@ $options = getopt('', [
     'slave-password:',
     'slave-ssl-ca:',
     'tables:',
-    'ignore-tables:'
+    'ignore-tables:',
+    'quiet'
 ]);
 
 foreach ($options as $key => $value) {
@@ -62,6 +64,8 @@ if (! isset($options['master']['host'])) {
 if (! isset($options['slave']['host'])) {
     usage();
 }
+
+$options['quiet'] = isset($options['quiet']);
 
 /**
  * @return PDO
@@ -202,6 +206,17 @@ function isInternalDatabase($name) {
     ], true);
 }
 
+/**
+ * @param string $value
+ *
+ * @return void
+ */
+$echoIfNotQuiet = function($value) use ($options) {
+    if (! $options['quiet']) {
+        echo $value;
+    }
+};
+
 try {
     $master = createPDO($options['master']);
     $slave  = createPDO($options['slave']);
@@ -229,8 +244,8 @@ try {
         }
     }
 
-    echo str_repeat(' ', $maxTableNameLength + 1);
-    echo 'ML MB MC SW SL MU SC SU', PHP_EOL;
+    $echoIfNotQuiet(str_repeat(' ', $maxTableNameLength + 1));
+    $echoIfNotQuiet('ML MB MC SW SL MU SC SU' . PHP_EOL);
 
     $check = '.  ';
 
@@ -245,10 +260,10 @@ try {
     $startTime = microtime(true);
 
     foreach ($tables as $table) {
-        echo str_pad($table[0] . '.' . $table[1], $maxTableNameLength + 1, ' ', STR_PAD_RIGHT);
+        $echoIfNotQuiet(str_pad($table[0] . '.' . $table[1], $maxTableNameLength + 1, ' ', STR_PAD_RIGHT));
 
         $master->query('LOCK TABLES ' . quoteTableName($table) . ' READ');
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $masterLockStartTime = microtime(true);
 
@@ -256,25 +271,25 @@ try {
         $status = $statement->fetch(PDO::FETCH_ASSOC);
         $binlogFile = $status['File'];
         $binlogPosition = $status['Position'];
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $statement = $master->query('CHECKSUM TABLE ' . quoteTableName($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $masterChecksum = $checksum['Checksum'];
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $statement = $slave->prepare('SELECT MASTER_POS_WAIT(?, ?)');
         $statement->execute([$binlogFile, $binlogPosition]);
         $statement->fetch();
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $slave->query('LOCK TABLES ' . quoteTableName($table) . ' READ');
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $slaveLockStartTime = microtime(true);
 
         $master->query('UNLOCK TABLES');
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $masterLockEndTime = microtime(true);
         $masterLockTime = $masterLockEndTime - $masterLockStartTime;
@@ -287,10 +302,10 @@ try {
         $statement = $slave->query('CHECKSUM TABLE ' . quoteTableName($table));
         $checksum = $statement->fetch(PDO::FETCH_ASSOC);
         $slaveChecksum = $checksum['Checksum'];
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $slave->query('UNLOCK TABLES');
-        echo $check;
+        $echoIfNotQuiet($check);
 
         $slaveLockEndTime = microtime(true);
         $slaveLockTime = $slaveLockEndTime - $slaveLockStartTime;
@@ -301,31 +316,34 @@ try {
         }
 
         if ($slaveChecksum === $masterChecksum) {
-            echo 'OK';
+            $echoIfNotQuiet('OK');
         } else {
-            echo 'ERR';
+            $echoIfNotQuiet('ERR');
             $tablesInError[] = $table;
         }
 
-        echo PHP_EOL;
+        $echoIfNotQuiet(PHP_EOL);
     }
 
     $endTime = microtime(true);
     $totalTime = ($endTime - $startTime);
 
-    echo PHP_EOL;
-    printf('Total time: %.0f seconds.' . PHP_EOL, $totalTime);
+    $echoIfNotQuiet(PHP_EOL);
+    $echoIfNotQuiet(sprintf('Total time: %.0f seconds.' . PHP_EOL, $totalTime));
 
-    echo PHP_EOL;
-    printf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalMasterLockTime);
-    printf('Longest master lock time: %.1f seconds.' . PHP_EOL, $longestMasterLockTime);
+    $echoIfNotQuiet(PHP_EOL);
+    $echoIfNotQuiet(sprintf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalMasterLockTime));
+    $echoIfNotQuiet(sprintf('Longest master lock time: %.1f seconds.' . PHP_EOL, $longestMasterLockTime));
 
-    echo PHP_EOL;
-    printf('Total slave lock time: %.0f seconds.' . PHP_EOL, $totalSlaveLockTime);
-    printf('Longest slave lock time: %.1f seconds.' . PHP_EOL, $longestSlaveLockTime);
+    $echoIfNotQuiet(PHP_EOL);
+    $echoIfNotQuiet(sprintf('Total slave lock time: %.0f seconds.' . PHP_EOL, $totalSlaveLockTime));
+    $echoIfNotQuiet(sprintf('Longest slave lock time: %.1f seconds.' . PHP_EOL, $longestSlaveLockTime));
 
-    echo PHP_EOL;
-    printf('Tables in error: %d.' . PHP_EOL, count($tablesInError));
+    $echoIfNotQuiet(PHP_EOL);
+
+    if (! $options['quiet'] || $tablesInError) {
+        printf('Tables in error: %d.' . PHP_EOL, count($tablesInError));
+    }
 
     foreach ($tablesInError as $table) {
         echo ' - ', $table[0], '.', $table[1], "\n";

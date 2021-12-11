@@ -234,7 +234,7 @@ try {
 
     $check = '.  ';
 
-    $totalErrors = 0;
+    $tablesInError = [];
 
     $totalMasterLockTime = 0.0;
     $totalSlaveLockTime  = 0.0;
@@ -304,7 +304,7 @@ try {
             echo 'OK';
         } else {
             echo 'ERR';
-            $totalErrors++;
+            $tablesInError[] = $table;
         }
 
         echo PHP_EOL;
@@ -325,7 +325,11 @@ try {
     printf('Longest slave lock time: %.1f seconds.' . PHP_EOL, $longestSlaveLockTime);
 
     echo PHP_EOL;
-    printf('Tables in error: %d.' . PHP_EOL, $totalErrors);
+    printf('Tables in error: %d.' . PHP_EOL, count($tablesInError));
+
+    foreach ($tablesInError as $table) {
+        echo ' - ', $table[0], '.', $table[1], "\n";
+    }
 
     exit(0);
 } catch (\PDOException $e) {

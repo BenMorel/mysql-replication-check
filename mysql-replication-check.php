@@ -329,20 +329,20 @@ try {
     $totalTime = ($endTime - $startTime);
 
     $echoIfNotQuiet(PHP_EOL);
-    $echoIfNotQuiet(sprintf('Total time: %.0f seconds.' . PHP_EOL, $totalTime));
+    $echoIfNotQuiet(sprintf('Total time: %.0f seconds' . PHP_EOL, $totalTime));
 
     $echoIfNotQuiet(PHP_EOL);
-    $echoIfNotQuiet(sprintf('Total master lock time: %.0f seconds.' . PHP_EOL, $totalMasterLockTime));
-    $echoIfNotQuiet(sprintf('Longest master lock time: %.1f seconds.' . PHP_EOL, $longestMasterLockTime));
+    $echoIfNotQuiet(sprintf('Total master lock time: %.0f seconds' . PHP_EOL, $totalMasterLockTime));
+    $echoIfNotQuiet(sprintf('Longest master lock time: %.1f seconds' . PHP_EOL, $longestMasterLockTime));
 
     $echoIfNotQuiet(PHP_EOL);
-    $echoIfNotQuiet(sprintf('Total slave lock time: %.0f seconds.' . PHP_EOL, $totalSlaveLockTime));
-    $echoIfNotQuiet(sprintf('Longest slave lock time: %.1f seconds.' . PHP_EOL, $longestSlaveLockTime));
+    $echoIfNotQuiet(sprintf('Total slave lock time: %.0f seconds' . PHP_EOL, $totalSlaveLockTime));
+    $echoIfNotQuiet(sprintf('Longest slave lock time: %.1f seconds' . PHP_EOL, $longestSlaveLockTime));
 
     $echoIfNotQuiet(PHP_EOL);
 
     if (! $options['quiet'] || $tablesInError) {
-        printf('Tables in error: %d.' . PHP_EOL, count($tablesInError));
+        printf('Tables in error: %d' . PHP_EOL, count($tablesInError));
     }
 
     foreach ($tablesInError as $table) {

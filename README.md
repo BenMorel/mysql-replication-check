@@ -64,15 +64,15 @@ and finally the result of the sync check: `OK` or `ERR`.
     foo.post .  .  .  .  .  .  .  .  OK
     foo.tag  .  .  .  .  .  .  .  .  OK
     
-    Total time: 5 seconds.
+    Total time: 5 seconds
     
-    Total master lock time: 2 seconds.
-    Longest master lock time: 0.9 seconds.
+    Total master lock time: 2 seconds
+    Longest master lock time: 0.9 seconds
     
-    Total slave lock time: 3 seconds.
-    Longest slave lock time: 1.5 seconds.
+    Total slave lock time: 3 seconds
+    Longest slave lock time: 1.5 seconds
     
-    Tables in error: 0.
+    Tables in error: 0
 
 Each column represents the current action being undertaken:
 

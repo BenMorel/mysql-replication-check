@@ -346,7 +346,7 @@ try {
     }
 
     foreach ($tablesInError as $table) {
-        echo ' - ', $table[0], '.', $table[1], "\n";
+        echo ' - ', $table[0], '.', $table[1], PHP_EOL;
     }
 
     exit($tablesInError ? 1 : 0);

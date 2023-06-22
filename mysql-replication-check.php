@@ -203,6 +203,7 @@ function isInternalDatabase($name) {
         'mysql',
         'information_schema',
         'performance_schema',
+        'sys',
     ], true);
 }
 

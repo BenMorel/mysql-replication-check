@@ -94,10 +94,10 @@ function createPDO(array $values) {
 /**
  * @return array<array{string, string}>
  */
-function loadTables(PDO $master) {
+function loadTables(PDO $pdo) {
     $databases = [];
 
-    $statement = $master->query('SHOW DATABASES');
+    $statement = $pdo->query('SHOW DATABASES');
     while (false !== $database = $statement->fetchColumn()) {
         if (isInternalDatabase($database)) {
             continue;
@@ -109,7 +109,7 @@ function loadTables(PDO $master) {
     $tables = [];
 
     foreach ($databases as $database) {
-        $statement = $master->query('SHOW FULL TABLES FROM ' . quoteIdentifier($database) . " WHERE Table_Type != 'VIEW'");
+        $statement = $pdo->query('SHOW FULL TABLES FROM ' . quoteIdentifier($database) . " WHERE Table_Type != 'VIEW'");
         while (false !== $table = $statement->fetchColumn()) {
             $tables[] = [$database, $table];
         }
@@ -222,23 +222,24 @@ try {
     $master = createPDO($options['master']);
     $slave  = createPDO($options['slave']);
 
-    $tables = loadTables($master);
+    $masterTables = loadTables($master);
+    $slaveTables = loadTables($slave);
 
     if (isset($options['tables'])) {
-        $tables = filterTables($tables, $options['tables'], false);
+        $masterTables = filterTables($masterTables, $options['tables'], false);
     }
     if (isset($options['ignore']['tables'])) {
-        $tables = filterTables($tables, $options['ignore']['tables'], true);
+        $masterTables = filterTables($masterTables, $options['ignore']['tables'], true);
     }
 
-    if (! $tables) {
+    if (! $masterTables) {
         echo 'Nothing to do.', PHP_EOL;
         exit(1);
     }
 
     $maxTableNameLength = 0;
 
-    foreach ($tables as $table) {
+    foreach ($masterTables as $table) {
         $length = strlen($table[0]) + strlen($table[1]) + 1;
         if ($length > $maxTableNameLength) {
             $maxTableNameLength = $length;
@@ -260,8 +261,18 @@ try {
 
     $startTime = microtime(true);
 
-    foreach ($tables as $table) {
+    foreach ($masterTables as $table) {
         $echoIfNotQuiet(str_pad($table[0] . '.' . $table[1], $maxTableNameLength + 1, ' ', STR_PAD_RIGHT));
+
+        if (! in_array($table, $slaveTables, true)) {
+            $echoIfNotQuiet(str_repeat($check, 8));
+            $echoIfNotQuiet('ERR - Table not found');
+            $echoIfNotQuiet(PHP_EOL);
+
+            $tablesInError[] = $table;
+
+            continue;
+        }
 
         $master->query('LOCK TABLES ' . quoteTableName($table) . ' READ');
         $echoIfNotQuiet($check);
@@ -319,7 +330,7 @@ try {
         if ($slaveChecksum === $masterChecksum) {
             $echoIfNotQuiet('OK');
         } else {
-            $echoIfNotQuiet('ERR');
+            $echoIfNotQuiet('ERR - Checksum');
             $tablesInError[] = $table;
         }
 

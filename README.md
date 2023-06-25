@@ -1,6 +1,6 @@
 # MySQL replication check tool
 
-This tool uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table.html) to ensure that every table on a master and a slave MySQL server are in sync.
+This tool uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table.html) to ensure that every table on a master and a slave MySQL / MariaDB server are in sync.
 As opposed to several checksum tools, it is totally read-only: it does not write anything to the database, making it very safe.
 
 This tool uses table locks. Depending on the size of your tables, the speed of your server, and/or the availability of a maintenance window during which these locks are acceptable, this can be a problem or not.
@@ -12,7 +12,7 @@ This tool requires PHP >= 5.4 and the [PDO_MYSQL](http://php.net/manual/en/ref.p
 
 ## Compatibility
 
-This tool has been tested with MySQL 5.7 and MySQL 8.0, but may work with earlier versions.
+This tool has been tested with MySQL 5.7 and MySQL 8.0, and MariaDB 10.5, but may work with other versions.
 It works equally well with all types of replication: `STATEMENT`, `ROW` and `MIXED`, and all storage engines.
 
 ## Download

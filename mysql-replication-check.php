@@ -27,7 +27,7 @@ function usage()  {
     printf('    php %s \\' . PHP_EOL, $GLOBALS['argv'][0]);
     printf('        --master-host=localhost \\' . PHP_EOL);
     printf('        --slave-host=replica.example.com \\' . PHP_EOL);
-    printf('        --tables="foo.*,bar.*"' . PHP_EOL);
+    printf('        --tables="foo.*,bar.*" \\' . PHP_EOL);
     printf('        --ignore-tables="foo.bar,foo.baz"' . PHP_EOL);
 
     exit(1);

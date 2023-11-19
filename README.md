@@ -97,6 +97,30 @@ The tool being read-only, there is no impact on the server.
 Any locks will be released as soon as the current query is completed.
 If a query such as `CHECKSUM TABLE` takes too long to complete, you can locate it with [SHOW PROCESSLIST](http://dev.mysql.com/doc/en/show-processlist.html) and safely [KILL](http://dev.mysql.com/doc/en/kill.html) it manually.
 
+## Development
+
+If you want to contribute to this tool, you can test your changes with the provided Docker Compose configuration:
+
+```bash
+cd docker
+docker compose up -d --build
+docker exec -it mysql-replication-check-php bash
+```
+
+You're now inside the container, and can run the tool:
+
+```bash
+php /mysql-replication-check.php \
+  --master-host=mysql-master \
+  --master-user=root \
+  --master-password=master-password \
+  --slave-host=mysql-slave \
+  --slave-user=root \
+  --slave-password=slave-password
+```
+
+If you get a `Connection refused` error, wait a few seconds for the MySQL servers to start.
+
 ## License
 
 This tool is released under the MIT license.

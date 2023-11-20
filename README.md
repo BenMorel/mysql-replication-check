@@ -4,7 +4,7 @@ This PHP script uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table
 As opposed to several checksum tools, it is totally read-only: it does not write anything to the database, making it very safe.
 
 The `mysql-replication-check.php` script is **standalone**: it can be downloaded and run anywhere.
-Docker configuration is only used for development.
+Docker configuration & composer dependencies are only used for development.
 
 This tool uses table locks. Depending on the size of your tables, the speed of your server, and/or the availability of a maintenance window during which these locks are acceptable, this can be a problem or not.
 Locks are held for as little time as possible, and always one table at a time.
@@ -120,6 +120,12 @@ docker compose exec php php /mysql-replication-check.php  \
   --slave-host=mysql-slave \
   --slave-user=root \
   --slave-password=slave-password
+```
+
+Check static analysis:
+
+```bash
+docker compose exec php-psalm vendor/bin/psalm
 ```
 
 If you get a `Connection refused` error, wait a few seconds for the MySQL servers to start.

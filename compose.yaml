@@ -24,3 +24,12 @@ services:
     volumes:
       - ./mysql-replication-check.php:/mysql-replication-check.php
     command: sleep infinity
+  php-psalm:
+    build:
+      context: ./docker/php-psalm
+    volumes:
+      - ./docker/php-psalm/composer.json:/app/composer.json
+      - ./docker/php-psalm/psalm.xml:/app/psalm.xml
+      - ./mysql-replication-check.php:/app/mysql-replication-check.php
+    working_dir: /app
+    command: ["sh", "-c", "composer install && sleep infinity"]

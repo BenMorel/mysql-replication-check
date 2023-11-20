@@ -1,29 +1,26 @@
 services:
   mysql-master:
-    container_name: mysql-replication-check-master
     image: mysql:8.0
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: master-password
     volumes:
-      - ./master.sql:/init.sql
+      - ./docker/master.sql:/init.sql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --init-file /init.sql
   mysql-slave:
-    container_name: mysql-replication-check-slave
     image: mysql:8.0
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: slave-password
     volumes:
-      - ./slave.sql:/init.sql
+      - ./docker/slave.sql:/init.sql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --init-file /init.sql
   php:
-    container_name: mysql-replication-check-php
     depends_on:
       - mysql-master
       - mysql-slave
     build:
-      context: "./php"
+      context: ./docker/php
     volumes:
-      - ../mysql-replication-check.php:/mysql-replication-check.php
-    entrypoint: sleep infinity
+      - ./mysql-replication-check.php:/mysql-replication-check.php
+    command: sleep infinity

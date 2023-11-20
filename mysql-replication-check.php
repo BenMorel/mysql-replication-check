@@ -44,7 +44,6 @@ final class App
 
     /**
      * @return never
-     *
      * @throws PDOException
      */
     private function doRun()
@@ -187,7 +186,6 @@ final class App
      * @param Table[] $tables
      * @param string $pattern
      * @param bool $inverse
-     *
      * @return Table[]
      */
     private function filterTables(array $tables, $pattern, $inverse)

@@ -1,6 +1,6 @@
 # MySQL replication check tool
 
-This tool uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table.html) to ensure that every table on a master and a slave MySQL / MariaDB server are in sync.
+This standalone PHP script uses [CHECKSUM TABLE](http://dev.mysql.com/doc/en/checksum-table.html) to ensure that every table on a master and a slave MySQL / MariaDB server are in sync.
 As opposed to several checksum tools, it is totally read-only: it does not write anything to the database, making it very safe.
 
 This tool uses table locks. Depending on the size of your tables, the speed of your server, and/or the availability of a maintenance window during which these locks are acceptable, this can be a problem or not.
@@ -99,18 +99,19 @@ If a query such as `CHECKSUM TABLE` takes too long to complete, you can locate i
 
 ## Development
 
-If you want to contribute to this tool, you can test your changes with the provided Docker Compose configuration:
+If you want to contribute to this tool, you can test your changes with the provided Docker Compose configuration.
+
+Start the containers:
 
 ```bash
 cd docker
 docker compose up -d --build
-docker exec -it mysql-replication-check-php bash
 ```
 
-You're now inside the container, and can run the tool:
+Run the tool:
 
 ```bash
-php /mysql-replication-check.php \
+docker exec mysql-replication-check-php php /mysql-replication-check.php  \
   --master-host=mysql-master \
   --master-user=root \
   --master-password=master-password \

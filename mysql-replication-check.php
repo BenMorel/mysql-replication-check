@@ -460,7 +460,7 @@ class Database
      */
     public function unlockTables()
     {
-        $this->pdo->query('UNLOCK TABLES');
+        $this->pdo->exec('UNLOCK TABLES');
     }
 
     /**

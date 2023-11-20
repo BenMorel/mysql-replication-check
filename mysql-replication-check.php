@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * This script checks if the data in MySQL master and slave servers are in sync.
+ *
+ * You need PHP 5.4+ and the PDO_MYSQL driver to run this script.
+ *
+ * https://github.com/BenMorel/mysql-replication-check
+ */
+
 $app = new App($argv);
 $app->run();
 

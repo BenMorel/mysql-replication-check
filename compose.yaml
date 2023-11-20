@@ -5,16 +5,14 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: master-password
     volumes:
-      - ./docker/master.sql:/init.sql
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --init-file /init.sql
+      - ./docker/mysql-master/my.cnf:/etc/mysql/conf.d/my.cnf
   mysql-slave:
     image: mysql:8.0
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: slave-password
     volumes:
-      - ./docker/slave.sql:/init.sql
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --init-file /init.sql
+      - ./docker/mysql-slave/my.cnf:/etc/mysql/conf.d/my.cnf
   php:
     depends_on:
       - mysql-master
@@ -22,8 +20,9 @@ services:
     build:
       context: ./docker/php
     volumes:
+      - ./docker/php/init-db.php:/init-db.php
       - ./mysql-replication-check.php:/mysql-replication-check.php
-    command: sleep infinity
+    command: ["sh", "-c", "php /init-db.php && sleep infinity"]
   php-psalm:
     build:
       context: ./docker/php-psalm

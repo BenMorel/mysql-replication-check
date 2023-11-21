@@ -29,7 +29,7 @@ final class App
     {
         $this->programName = $argv[0];
         $this->options = $this->getOptions();
-        $this->output = new Output(! $this->options->quiet);
+        $this->output = new Output(! $this->options->quiet, $this->options->color);
     }
 
     /**
@@ -65,7 +65,7 @@ final class App
         }
 
         if (! $masterTables) {
-            $this->output->writeln('Nothing to do.');
+            $this->output->writeln('<yellow>Nothing to do.</>');
             exit(1);
         }
 
@@ -97,7 +97,7 @@ final class App
             $this->output->writeVerbose(str_pad($table->database . '.' . $table->table, $maxTableNameLength + 1));
 
             if (! in_array($table, $slaveTables)) { // by-value comparison!
-                $this->output->writelnVerbose(str_repeat($check, 8) . 'ERR - Table not found');
+                $this->output->writelnVerbose(str_repeat($check, 8) . '<red,bold>ERR</> <red>Table not found</>');
 
                 $tablesInError[] = $table;
 
@@ -149,9 +149,9 @@ final class App
             }
 
             if ($slaveChecksum === $masterChecksum) {
-                $this->output->writeVerbose('OK');
+                $this->output->writeVerbose('<green,bold>OK</>');
             } else {
-                $this->output->writeVerbose('ERR - Checksum');
+                $this->output->writeVerbose('<red,bold>ERR</> <red>Checksum mismatch</>');
                 $tablesInError[] = $table;
             }
 
@@ -162,24 +162,29 @@ final class App
         $totalTime = ($endTime - $startTime);
 
         $this->output->writelnVerbose();
-        $this->output->writelnVerbose(sprintf('Total time: %.0f seconds', $totalTime));
+        $this->output->writelnVerbose(sprintf('Total time: <cyan,bold>%.0f</> seconds', $totalTime));
 
         $this->output->writelnVerbose();
-        $this->output->writelnVerbose(sprintf('Total master lock time: %.0f seconds', $totalMasterLockTime));
-        $this->output->writelnVerbose(sprintf('Longest master lock time: %.1f seconds', $longestMasterLockTime));
+        $this->output->writelnVerbose(sprintf('Total master lock time: <cyan,bold>%.0f</> seconds', $totalMasterLockTime));
+        $this->output->writelnVerbose(sprintf('Longest master lock time: <cyan,bold>%.1f</> seconds', $longestMasterLockTime));
 
         $this->output->writelnVerbose();
-        $this->output->writelnVerbose(sprintf('Total slave lock time: %.0f seconds', $totalSlaveLockTime));
-        $this->output->writelnVerbose(sprintf('Longest slave lock time: %.1f seconds', $longestSlaveLockTime));
+        $this->output->writelnVerbose(sprintf('Total slave lock time: <cyan,bold>%.0f</> seconds', $totalSlaveLockTime));
+        $this->output->writelnVerbose(sprintf('Longest slave lock time: <cyan,bold>%.1f</> seconds', $longestSlaveLockTime));
 
         $this->output->writelnVerbose();
 
-        if (! $this->options->quiet || $tablesInError) {
-            $this->output->writeln(sprintf('Tables in error: %d', count($tablesInError)));
+        if (! $tablesInError) {
+            $this->output->writelnVerbose('<green>All checked tables are in sync!</>');
         }
 
-        foreach ($tablesInError as $table) {
-            $this->output->writeln(sprintf(' - %s.%s', $table->database, $table->table));
+        if ($tablesInError) {
+            $this->output->writeln(sprintf('<red>Tables in error:</> <red,bold>%d</>', count($tablesInError)));
+            $this->output->writeln();
+
+            foreach ($tablesInError as $table) {
+                $this->output->writeln(sprintf(' - <red,bold>%s</>.<red,bold>%s</>', $table->database, $table->table));
+            }
         }
 
         exit($tablesInError ? 1 : 0);
@@ -259,6 +264,7 @@ final class App
          *     tables?: string,
          *     ignore-tables?: string,
          *     quiet?: false,
+         *     color?: false,
          * } $options
          */
         $options = getopt('', [
@@ -274,7 +280,8 @@ final class App
             'slave-ssl-ca:',
             'tables:',
             'ignore-tables:',
-            'quiet'
+            'quiet',
+            'color'
         ]);
 
         if (! isset($options['master-host']) || ! isset($options['slave-host'])) {
@@ -302,7 +309,8 @@ final class App
             $slave,
             isset($options['tables']) ? $options['tables'] : null,
             isset($options['ignore-tables']) ? $options['ignore-tables'] : null,
-            isset($options['quiet'])
+            isset($options['quiet']),
+            isset($options['color'])
         );
     }
 
@@ -507,17 +515,34 @@ final class Database
     }
 }
 
+/**
+ * All `write*()` methods support the following tags:
+ * 
+ * - <red>...</>
+ * - <green>...</>
+ * - <blue>...</>
+ * - <yellow>...</>
+ * - <bold>...</>
+ *
+ * Multiple tags can be combined, e.g. <red,bold>...</>.
+ * Nested tags are not allowed.
+ */
 final class Output
 {
     /** @var bool */
     private $verbose;
 
+    /** @var bool */
+    private $color;
+
     /**
-     * @param bool $verbose
+     * @param bool $verbose Whether writeVerbose() and writelnVerbose() should output anything.
+     * @param bool $color   Whether to use colored output.
      */
-    public function __construct($verbose)
+    public function __construct($verbose, $color)
     {
         $this->verbose = $verbose;
+        $this->color = $color;
     }
 
     /**
@@ -526,7 +551,7 @@ final class Output
      */
     public function write($message)
     {
-        echo $message;
+        echo $this->addStyles($message);
     }
 
     /**
@@ -535,7 +560,7 @@ final class Output
      */
     public function writeln($message = '')
     {
-        echo $message, PHP_EOL;
+        $this->write($message . PHP_EOL);
     }
 
     /**
@@ -557,6 +582,57 @@ final class Output
     {
         if ($this->verbose) {
             $this->writeln($message);
+        }
+    }
+
+    /**
+     * @param string $message
+     * @return string
+     */
+    private function addStyles($message)
+    {
+        return preg_replace_callback('!<([\w,]+)>(.*?)</>!', function($matches) {
+            list(, $style, $message) = $matches;
+
+            if (! $this->color) {
+                return $message;
+            }
+
+            $styles = explode(',', $style);
+
+            $styles = array_map(function($style) {
+                return $this->getStyleCode($style);
+            }, $styles);
+
+            $styles = array_filter($styles, function($style) {
+                return $style !== null;
+            });
+
+            $styles = array_unique($styles);
+
+            return "\e[" . implode(';', $styles) . 'm' . $message . "\e[0m";
+        }, $message);
+    }
+
+    /**
+     * @param string $style
+     * @return string|null
+     */
+    private function getStyleCode($style)
+    {
+        switch ($style) {
+            case 'red':
+                return '31';
+            case 'green':
+                return '32';
+            case 'cyan':
+                return '36';
+            case 'yellow':
+                return '33';
+            case 'bold':
+                return '1';
+            default:
+                return null;
         }
     }
 }
@@ -581,23 +657,29 @@ final class Options
     /** @var bool */
     public $quiet;
 
+    /** @var bool */
+    public $color;
+
     /**
      * @param string|null $tables
      * @param string|null $ignoreTables
      * @param bool $quiet
+     * @param bool $color
      */
     public function __construct(
         Server $master,
         Server $slave,
         $tables,
         $ignoreTables,
-        $quiet
+        $quiet,
+        $color
     ) {
         $this->master = $master;
         $this->slave = $slave;
         $this->tables = $tables;
         $this->ignoreTables = $ignoreTables;
         $this->quiet = $quiet;
+        $this->color = $color;
     }
 }
 

@@ -43,6 +43,7 @@ Download here: [mysql-replication-check.php](https://raw.githubusercontent.com/B
 | `--tables`          | Optional     | A comma-separated list of tables to check                 |
 | `--ignore-tables`   | Optional     | A comma-separated list of tables to ignore                |
 | `--quiet`           | Optional     | Set this flag to only output something if the check fails |
+| `--color`           | Optional     | Set this flag to colorize the output                      |
 
 ### Filtering
 

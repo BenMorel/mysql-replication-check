@@ -122,13 +122,13 @@ docker compose exec php php mysql-replication-check.php  \
   --slave-password=slave-password
 ```
 
+💡 If you get a `Connection refused` error, wait a few seconds for the MySQL servers to start.
+
 Check static analysis:
 
 ```bash
 docker compose exec php-psalm vendor/bin/psalm
 ```
-
-If you get a `Connection refused` error, wait a few seconds for the MySQL servers to start.
 
 ## License
 

@@ -18,6 +18,9 @@ final class App
 
     /** @var Options */
     private $options;
+    
+    /** @var Output */
+    private $output;
 
     /**
      * @param string[] $argv
@@ -26,6 +29,7 @@ final class App
     {
         $this->programName = $argv[0];
         $this->options = $this->getOptions();
+        $this->output = new Output(! $this->options->quiet);
     }
 
     /**
@@ -36,8 +40,8 @@ final class App
         try {
             $this->doRun();
         } catch (Exception $e) {
-            $this->writeln();
-            $this->writeln(sprintf('%s: %s', get_class($e), $e->getMessage()));
+            $this->output->writeln();
+            $this->output->writeln(sprintf('%s: %s', get_class($e), $e->getMessage()));
             exit(1);
         }
     }
@@ -61,7 +65,7 @@ final class App
         }
 
         if (! $masterTables) {
-            $this->writeln('Nothing to do.');
+            $this->output->writeln('Nothing to do.');
             exit(1);
         }
 
@@ -74,8 +78,8 @@ final class App
             }
         }
 
-        $this->writeVerbose(str_repeat(' ', $maxTableNameLength + 1));
-        $this->writelnVerbose('ML MB MC SW SL MU SC SU');
+        $this->output->writeVerbose(str_repeat(' ', $maxTableNameLength + 1));
+        $this->output->writelnVerbose('ML MB MC SW SL MU SC SU');
 
         $check = '.  ';
 
@@ -90,10 +94,10 @@ final class App
         $startTime = microtime(true);
 
         foreach ($masterTables as $table) {
-            $this->writeVerbose(str_pad($table->database . '.' . $table->table, $maxTableNameLength + 1));
+            $this->output->writeVerbose(str_pad($table->database . '.' . $table->table, $maxTableNameLength + 1));
 
             if (! in_array($table, $slaveTables)) { // by-value comparison!
-                $this->writelnVerbose(str_repeat($check, 8) . 'ERR - Table not found');
+                $this->output->writelnVerbose(str_repeat($check, 8) . 'ERR - Table not found');
 
                 $tablesInError[] = $table;
 
@@ -101,26 +105,26 @@ final class App
             }
 
             $master->lockTable($table);
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $masterLockStartTime = microtime(true);
 
             $masterPosition = $master->getMasterBinlogPosition();
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $masterChecksum = $master->checksumTable($table);
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $slave->waitForMaster($masterPosition);
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $slave->lockTable($table);
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $slaveLockStartTime = microtime(true);
 
             $master->unlockTables();
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $masterLockEndTime = microtime(true);
             $masterLockTime = $masterLockEndTime - $masterLockStartTime;
@@ -131,10 +135,10 @@ final class App
             }
 
             $slaveChecksum = $slave->checksumTable($table);
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $slave->unlockTables();
-            $this->writeVerbose($check);
+            $this->output->writeVerbose($check);
 
             $slaveLockEndTime = microtime(true);
             $slaveLockTime = $slaveLockEndTime - $slaveLockStartTime;
@@ -145,37 +149,37 @@ final class App
             }
 
             if ($slaveChecksum === $masterChecksum) {
-                $this->writeVerbose('OK');
+                $this->output->writeVerbose('OK');
             } else {
-                $this->writeVerbose('ERR - Checksum');
+                $this->output->writeVerbose('ERR - Checksum');
                 $tablesInError[] = $table;
             }
 
-            $this->writelnVerbose();
+            $this->output->writelnVerbose();
         }
 
         $endTime = microtime(true);
         $totalTime = ($endTime - $startTime);
 
-        $this->writelnVerbose();
-        $this->writelnVerbose(sprintf('Total time: %.0f seconds', $totalTime));
+        $this->output->writelnVerbose();
+        $this->output->writelnVerbose(sprintf('Total time: %.0f seconds', $totalTime));
 
-        $this->writelnVerbose();
-        $this->writelnVerbose(sprintf('Total master lock time: %.0f seconds', $totalMasterLockTime));
-        $this->writelnVerbose(sprintf('Longest master lock time: %.1f seconds', $longestMasterLockTime));
+        $this->output->writelnVerbose();
+        $this->output->writelnVerbose(sprintf('Total master lock time: %.0f seconds', $totalMasterLockTime));
+        $this->output->writelnVerbose(sprintf('Longest master lock time: %.1f seconds', $longestMasterLockTime));
 
-        $this->writelnVerbose();
-        $this->writelnVerbose(sprintf('Total slave lock time: %.0f seconds', $totalSlaveLockTime));
-        $this->writelnVerbose(sprintf('Longest slave lock time: %.1f seconds', $longestSlaveLockTime));
+        $this->output->writelnVerbose();
+        $this->output->writelnVerbose(sprintf('Total slave lock time: %.0f seconds', $totalSlaveLockTime));
+        $this->output->writelnVerbose(sprintf('Longest slave lock time: %.1f seconds', $longestSlaveLockTime));
 
-        $this->writelnVerbose();
+        $this->output->writelnVerbose();
 
         if (! $this->options->quiet || $tablesInError) {
-            $this->writeln(sprintf('Tables in error: %d', count($tablesInError)));
+            $this->output->writeln(sprintf('Tables in error: %d', count($tablesInError)));
         }
 
         foreach ($tablesInError as $table) {
-            $this->writeln(sprintf(' - %s.%s', $table->database, $table->table));
+            $this->output->writeln(sprintf(' - %s.%s', $table->database, $table->table));
         }
 
         exit($tablesInError ? 1 : 0);
@@ -219,9 +223,9 @@ final class App
         $databaseAndTablePatterns = explode('.', $filter);
 
         if (count($databaseAndTablePatterns) !== 2) {
-            $this->writeln("Invalid filter: $filter");
-            $this->writeln('Please use this format: database.table');
-            $this->writeln('You can use a wildcard * at any position.');
+            $this->output->writeln("Invalid filter: $filter");
+            $this->output->writeln('Please use this format: database.table');
+            $this->output->writeln('You can use a wildcard * at any position.');
             exit(1);
         }
 
@@ -233,46 +237,6 @@ final class App
 
         return preg_match($databasePattern, $table->database) === 1
             && preg_match($tablePattern, $table->table) === 1;
-    }
-
-    /**
-     * @param string $message
-     * @return void
-     */
-    private function write($message)
-    {
-        echo $message;
-    }
-
-    /**
-     * @param string $message
-     * @return void
-     */
-    private function writeln($message = '')
-    {
-        echo $message, PHP_EOL;
-    }
-
-    /**
-     * @param string $message
-     * @return void
-     */
-    private function writeVerbose($message)
-    {
-        if (! $this->options->quiet) {
-            $this->write($message);
-        }
-    }
-
-    /**
-     * @param string $message
-     * @return void
-     */
-    private function writelnVerbose($message = '')
-    {
-        if (! $this->options->quiet) {
-            $this->writeln($message);
-        }
     }
 
     /**
@@ -346,7 +310,7 @@ final class App
      * @return never
      */
     private function showUsageAndExit() {
-        $this->writeln(sprintf(
+        $this->output->writeln(sprintf(
 <<<EOF
 Usage: php %s [options]
 
@@ -380,7 +344,7 @@ EOF
     }
 }
 
-class Database
+final class Database
 {
     /** @var PDO */
     private $pdo;
@@ -540,6 +504,60 @@ class Database
             'performance_schema',
             'sys',
         ], true);
+    }
+}
+
+final class Output
+{
+    /** @var bool */
+    private $verbose;
+
+    /**
+     * @param bool $verbose
+     */
+    public function __construct($verbose)
+    {
+        $this->verbose = $verbose;
+    }
+
+    /**
+     * @param string $message
+     * @return void
+     */
+    public function write($message)
+    {
+        echo $message;
+    }
+
+    /**
+     * @param string $message
+     * @return void
+     */
+    public function writeln($message = '')
+    {
+        echo $message, PHP_EOL;
+    }
+
+    /**
+     * @param string $message
+     * @return void
+     */
+    public function writeVerbose($message)
+    {
+        if ($this->verbose) {
+            $this->write($message);
+        }
+    }
+
+    /**
+     * @param string $message
+     * @return void
+     */
+    public function writelnVerbose($message = '')
+    {
+        if ($this->verbose) {
+            $this->writeln($message);
+        }
     }
 }
 

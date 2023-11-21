@@ -93,6 +93,10 @@ Each column represents the current action being undertaken:
 
 The lock times give you an idea of the impact the tool had on the availability of the database.
 
+## Exit code
+
+The script exits with code `0` if all tables are in sync, or `1` if at least one table is out of sync.
+
 ## Cancelling the check
 
 You can interrupt the check at any time with <kbd>Ctrl</kbd> + <kbd>C</kbd>.

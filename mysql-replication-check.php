@@ -35,16 +35,15 @@ final class App
     {
         try {
             $this->doRun();
-        } catch (\PDOException $e) {
+        } catch (Exception $e) {
             $this->writeln();
-            $this->writeln('PDO exception: ' . $e->getMessage());
+            $this->writeln(sprintf('%s: %s', get_class($e), $e->getMessage()));
             exit(1);
         }
     }
 
     /**
      * @return never
-     * @throws PDOException
      */
     private function doRun()
     {
@@ -388,7 +387,6 @@ class Database
 
     /**
      * @param Server $server
-     * @throws PDOException
      */
     public function __construct(Server $server)
     {
@@ -411,7 +409,6 @@ class Database
 
     /**
      * @return Table[]
-     * @throws PDOException
      */
     public function getTables()
     {
@@ -445,7 +442,6 @@ class Database
 
     /**
      * @return void
-     * @throws PDOException
      */
     public function lockTable(Table $table)
     {
@@ -454,7 +450,6 @@ class Database
 
     /**
      * @return void
-     * @throws PDOException
      */
     public function unlockTables()
     {
@@ -463,14 +458,17 @@ class Database
 
     /**
      * @return BinlogPosition
-     * @throws PDOException
      */
     public function getMasterBinlogPosition()
     {
         $statement = $this->pdo->query('SHOW MASTER STATUS');
 
-        /** @var array{File: string, Position: string} $result */
+        /** @var array{File: string, Position: string}|false $result */
         $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($result === false) {
+            throw new Exception('SHOW MASTER STATUS returned no result; is binary logging enabled on the master server?');
+        }
 
         return new BinlogPosition(
             $result['File'],
@@ -480,7 +478,6 @@ class Database
 
     /**
      * @return void
-     * @throws PDOException
      */
     public function waitForMaster(BinlogPosition $binlogPosition)
     {
@@ -489,12 +486,16 @@ class Database
             $binlogPosition->file,
             $binlogPosition->position
         ]);
-        $statement->fetch();
+
+        $result = $statement->fetchColumn();
+
+        if ($result === null) {
+            throw new Exception('MASTER_POS_WAIT() failed; is replication started on the slave server?');
+        }
     }
 
     /**
      * @return string
-     * @throws PDOException
      */
     public function checksumTable(Table $table)
     {

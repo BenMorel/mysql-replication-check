@@ -20,9 +20,10 @@ services:
     build:
       context: ./docker/php
     volumes:
-      - ./docker/php/init-db.php:/init-db.php
-      - ./mysql-replication-check.php:/mysql-replication-check.php
-    command: ["sh", "-c", "php /init-db.php && sleep infinity"]
+      - ./docker/php/init-db.php:/app/init-db.php
+      - ./mysql-replication-check.php:/app/mysql-replication-check.php
+    working_dir: /app
+    command: ["sh", "-c", "php init-db.php && sleep infinity"]
   php-psalm:
     build:
       context: ./docker/php-psalm

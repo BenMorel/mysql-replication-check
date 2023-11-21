@@ -113,7 +113,7 @@ docker compose up -d --build
 Run the tool:
 
 ```bash
-docker compose exec php php /mysql-replication-check.php  \
+docker compose exec php php mysql-replication-check.php  \
   --master-host=mysql-master \
   --master-user=root \
   --master-password=master-password \
